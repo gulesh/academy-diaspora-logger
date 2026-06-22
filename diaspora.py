@@ -10,7 +10,7 @@ import json
 import sys
 import time
 
-from .diaspora_context import get_diaspora_events
+from diaspora_context import get_diaspora_events
 
 
 def cmd_setup(_args: argparse.Namespace) -> int:

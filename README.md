@@ -2,6 +2,8 @@
 
 Academy `LogConfig` that ships agent logs to a [Diaspora](https://diaspora-project.org) Kafka topic, with built-in support for running agents on [Globus Compute](https://www.globus.org/compute).
 
+Also ships a `diaspora` CLI for managing credentials, fetching events, and clearing topics.
+
 ## Installation
 
 ```bash
@@ -10,7 +12,9 @@ pip install academy-diaspora-logger
 
 > **Globus Compute users:** install this package on **both** your local machine and the remote endpoint so that dill can deserialize `DiasporaLogConfig` on the worker.
 
-## Usage
+---
+
+## Python API
 
 ### Local execution (threads / local processes)
 
@@ -49,6 +53,61 @@ async with await Manager.from_exchange_factory(
 ) as manager:
     ...
 ```
+
+### Consuming events locally
+
+```python
+from diaspora_context import get_diaspora_events
+
+result = get_diaspora_events(
+    topic_name=kafka_topic,
+    time_horizon=time_before_ms,   # unix epoch milliseconds
+)
+for event in result["events"]:
+    print(event)
+```
+
+---
+
+## CLI
+
+After installation a `diaspora` command is available on your PATH.
+
+### `diaspora setup`
+
+Register your Globus identity with Diaspora and create your IAM credentials.
+
+```bash
+diaspora setup
+```
+
+### `diaspora context`
+
+Fetch recent events from a topic and print them as JSON.
+
+```bash
+diaspora context --topic my-topic
+diaspora context --topic ns-abc123.my-topic --lookback 7200   # last 2 hours
+diaspora context --topic my-topic --time-horizon 1718000000000 --max-messages 500
+```
+
+| Flag | Default | Description |
+|---|---|---|
+| `--topic` | required | Topic name (short or fully-qualified) |
+| `--lookback` | `3600` | Seconds to look back from now |
+| `--time-horizon` | — | Unix-epoch ms timestamp (overrides `--lookback`) |
+| `--timeout-ms` | `30000` | Consumer poll timeout |
+| `--max-messages` | `10000` | Maximum events to return |
+
+### `diaspora clear`
+
+Recreate (wipe) a topic.
+
+```bash
+diaspora clear my-topic
+```
+
+---
 
 ## How it works
 
