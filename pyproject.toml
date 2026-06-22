@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=64.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "academy-diaspora-logger"
+version = "0.1.0"
+description = "Academy LogConfig that ships agent logs to Diaspora/Kafka, with support for Globus Compute remote execution"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Gulesh Shukla", email = "gshukla14@uchicago.edu"},
+]
+maintainers = [
+    {name = "Gulesh Shukla", email = "gshukla14@uchicago.edu"},
+]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: Implementation :: CPython",
+]
+dependencies = [
+    "academy-py>=0.3.1",
+    "certifi",
+    "diaspora-event-sdk",
+    "kafka-python<3",
+]
+
+[tool.setuptools]
+py-modules = ["diaspora_logger"]
