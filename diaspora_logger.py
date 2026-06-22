@@ -234,10 +234,16 @@ class DiasporaLogConfig(LogConfig):
 
         def uninitialize() -> None:
             target.removeHandler(handler)
-            with contextlib.suppress(Exception):
-                producer.close(timeout=self.send_timeout)
+            # Flush via the handler first, then close the producer.
+            # Reversing this order causes __del__ to fire during GC with a
+            # 1-second timeout (kafka-python hardcoded) and raise KafkaTimeoutError.
             with contextlib.suppress(Exception):
                 handler.close()
+            with contextlib.suppress(Exception):
+                producer.close(timeout=self.send_timeout)
+            # Ensure kafka-python's __del__ guard sees the producer as closed.
+            with contextlib.suppress(Exception):
+                producer._closed = True
 
         return uninitialize
 
