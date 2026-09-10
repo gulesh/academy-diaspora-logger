@@ -74,6 +74,13 @@ class DiasporaHandler(logging.Handler):
         self.send_timeout = send_timeout
 
     def emit(self, record: logging.LogRecord) -> None:
+        # kafka-python logs its own connection lifecycle via `kafka.*` loggers.
+        # If this handler is attached to the root logger, shipping those
+        # records back through the same producer recurses into send() calls
+        # that are themselves still establishing the connection -- a feedback
+        # loop, not a real message to ship.
+        if record.name.startswith("kafka"):
+            return
         try:
             formatted = self.format(record) if self.formatter is not None else None
             event = {k: _json_safe(v) for k, v in record.__dict__.items()}
@@ -119,7 +126,7 @@ class DiasporaLogConfig(LogConfig):
         logger_name: str = "academy",
         level: int = logging.DEBUG,
         send_timeout: int = 30,
-        max_block_ms: int = 1000,
+        max_block_ms: int = 10000,
         _credentials: dict[str, str] | None = None,
     ) -> None:
         super().__init__()
@@ -137,7 +144,7 @@ class DiasporaLogConfig(LogConfig):
         logger_name: str = "academy",
         level: int = logging.DEBUG,
         send_timeout: int = 30,
-        max_block_ms: int = 1000,
+        max_block_ms: int = 10000,
     ) -> "DiasporaLogConfig":
         """Fetch Kafka credentials now and embed them in the config.
 
