@@ -15,9 +15,9 @@ from diaspora_context import get_diaspora_events
 
 def cmd_setup(_args: argparse.Namespace) -> int:
     """Create a Diaspora user (registers credentials via Globus Auth)."""
-    from diaspora_event_sdk import Client
+    from diaspora_auth import get_client
 
-    client = Client()
+    client = get_client(interactive=True)
     result = client.create_user()
     print(json.dumps(result, indent=2, default=str))
     return 0
@@ -39,9 +39,9 @@ def cmd_context(args: argparse.Namespace) -> int:
 
 def cmd_clear(args: argparse.Namespace) -> int:
     """Recreate (clear) a Diaspora topic."""
-    from diaspora_event_sdk import Client
+    from diaspora_auth import get_client
 
-    client = Client()
+    client = get_client(interactive=True)
     result = client.recreate_topic(args.topic)
     print(json.dumps(result, indent=2, default=str))
     return 0

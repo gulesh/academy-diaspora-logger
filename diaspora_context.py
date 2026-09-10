@@ -44,11 +44,13 @@ def get_diaspora_events(
     Returns a dict with topic metadata and a list of decoded events.
     """
     try:
-        from diaspora_event_sdk import Client, KafkaConsumer
+        from diaspora_event_sdk import KafkaConsumer
     except ImportError as exc:
         raise RuntimeError("diaspora_event_sdk is required for Diaspora context") from exc
 
-    client = Client()
+    from diaspora_auth import get_client
+
+    client = get_client()
     kafka_topic = resolve_kafka_topic(topic_name, client.namespace)
 
     ssl_cafile = get_ssl_cafile()

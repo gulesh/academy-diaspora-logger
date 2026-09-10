@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "academy-diaspora-logger"
-version = "0.1.3"
+version = "1.0.0"
 description = "Academy LogConfig that ships agent logs to Diaspora/Kafka, with support for Globus Compute remote execution"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -33,4 +33,4 @@ dependencies = [
 diaspora = "diaspora:main"
 
 [tool.setuptools]
-py-modules = ["diaspora_logger", "diaspora_context", "diaspora"]
+py-modules = ["diaspora_logger", "diaspora_context", "diaspora", "diaspora_auth"]
