@@ -35,6 +35,20 @@ def get_client(environment: str | None = None, *, interactive: bool = False) -> 
         ) from exc
 
 
+def ensure_topic(topic_name: str, environment: str | None = None, *, interactive: bool = False, client: Any = None) -> str:
+    """Resolve *topic_name* to its namespace-qualified form, creating it if needed.
+
+    Safe to call repeatedly (best-effort create; existing topics are left alone).
+    Pass an existing ``client`` to skip a redundant ``get_client()`` call.
+    """
+    if client is None:
+        client = get_client(environment, interactive=interactive)
+    short = topic_name if "." not in topic_name else topic_name.split(".", 1)[1]
+    with contextlib.suppress(Exception):
+        client.create_topic(short)
+    return topic_name if "." in topic_name else f"{client.namespace}.{topic_name}"
+
+
 def _is_invalid_grant(exc: BaseException) -> bool:
     try:
         from globus_sdk.exc.api import GlobusAPIError
@@ -64,4 +78,4 @@ def _clear_stale_token(environment: str | None) -> None:
         get_globus_app(environment=environment).logout(sweep=True)
 
 
-__all__ = ["DiasporaAuthError", "get_client"]
+__all__ = ["DiasporaAuthError", "ensure_topic", "get_client"]

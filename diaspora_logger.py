@@ -158,7 +158,7 @@ class DiasporaLogConfig(LogConfig):
             A ``DiasporaLogConfig`` with embedded AWS credentials ready to
             be sent to a remote Globus Compute worker.
         """
-        from diaspora_auth import get_client
+        from diaspora_auth import ensure_topic, get_client
 
         client = get_client()
         keys = client.create_key()
@@ -167,6 +167,7 @@ class DiasporaLogConfig(LogConfig):
             "secret_key": keys["secret_key"],
             "endpoint": keys["endpoint"],
         }
+        kafka_topic = ensure_topic(kafka_topic, client=client)
         return cls(
             kafka_topic,
             logger_name=logger_name,
@@ -217,10 +218,10 @@ class DiasporaLogConfig(LogConfig):
             producer = _KafkaProducer(**producer_kwargs)
         else:
             # Local path: KafkaProducer handles auth via Globus tokens on disk.
-            from diaspora_auth import get_client
+            from diaspora_auth import ensure_topic
             from diaspora_event_sdk.sdk.kafka_client import KafkaProducer
 
-            get_client()  # fail clearly here instead of KafkaProducer's opaque error
+            self.kafka_topic = ensure_topic(self.kafka_topic)  # also serves as an auth pre-check
 
             local_kwargs: dict[str, Any] = {"max_block_ms": self.max_block_ms}
             if ssl_cafile:
