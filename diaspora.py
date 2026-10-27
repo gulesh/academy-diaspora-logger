@@ -41,8 +41,19 @@ def cmd_clear(args: argparse.Namespace) -> int:
     """Recreate (clear) a Diaspora topic."""
     from diaspora_auth import get_client
 
+    topic = args.topic_opt or args.topic
+    if not topic:
+        raise ValueError("a topic is required: diaspora clear --topic NAME")
+    if args.topic_opt and args.topic and args.topic_opt != args.topic:
+        raise ValueError("give the topic once, either positionally or via --topic")
+
     client = get_client(interactive=True)
-    result = client.recreate_topic(args.topic)
+    # recreate_topic() takes the short name within the default namespace, so
+    # accept a fully-qualified name the same way `context` does.
+    namespace, short = topic.split(".", 1) if "." in topic else (client.namespace, topic)
+    if namespace != client.namespace:
+        raise ValueError(f"topic {topic!r} is not in your namespace {client.namespace!r}")
+    result = client.recreate_topic(short)
     print(json.dumps(result, indent=2, default=str))
     return 0
 
@@ -71,7 +82,8 @@ def build_parser() -> argparse.ArgumentParser:
     ctx.add_argument("--max-messages", type=int, default=10000, help="Max events to fetch (default: 10000).")
 
     clr = subparsers.add_parser("clear", help="Recreate (clear) a Diaspora topic.")
-    clr.add_argument("topic", help="Topic name to recreate.")
+    clr.add_argument("--topic", dest="topic_opt", help="Topic name (short or fully-qualified).")
+    clr.add_argument("topic", nargs="?", help=argparse.SUPPRESS)  # positional form kept for back-compat
 
     return parser
 

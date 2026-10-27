@@ -116,10 +116,11 @@ diaspora context --topic my-topic --time-horizon 1718000000000 --max-messages 50
 
 ### `diaspora clear`
 
-Recreate (wipe) a topic.
+Recreate (wipe) a topic. Like `context`, it takes `--topic` with a short or fully-qualified name.
 
 ```bash
-diaspora clear my-topic
+diaspora clear --topic my-topic
+diaspora clear --topic ns-abc123.my-topic
 ```
 
 ---
