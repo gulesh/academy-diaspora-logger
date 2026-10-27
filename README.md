@@ -14,6 +14,21 @@ pip install academy-diaspora-logger
 
 ---
 
+## Topic names
+
+Every Diaspora topic lives in a namespace tied to your Globus identity (e.g. `ns-8fd0c242d30d`). The fully-qualified Kafka topic is `<namespace>.<topic>`.
+
+Anywhere this package takes a topic (`DiasporaLogConfig`, `prefetch()`, `get_diaspora_events`, `diaspora context`), you can pass either form:
+
+- **Short name** (`lol1`), which gets your default namespace added: `ns-8fd0c242d30d.lol1`.
+- **Fully-qualified name** (`ns-8fd0c242d30d.lol1`), which is used as-is.
+
+So `DiasporaLogConfig("lol1")` and `diaspora context --topic lol1` refer to the same topic. Because a `.` marks a qualified name, short names shouldn't contain one.
+
+`DiasporaLogConfig` creates the topic if it doesn't exist yet. If it can't create the topic and the topic doesn't already exist, `init_logging()` / `prefetch()` raise `DiasporaTopicError` rather than silently sending logs nowhere. If `diaspora context` prints `No partitions assigned for topic ...`, that topic does not exist.
+
+---
+
 ## Python API
 
 ### Local execution (threads / local processes)
@@ -122,6 +137,6 @@ diaspora clear my-topic
 
 - Python ≥ 3.10
 - `academy-py >= 0.3.1`
-- `diaspora-event-sdk`
+- `diaspora-event-sdk[kafka-python] >= 0.4.8` (older versions fail with `No module named 'diaspora_event_sdk.sdk.auth'`)
 - `kafka-python < 3`
 - `certifi` (optional, recommended for macOS SSL)

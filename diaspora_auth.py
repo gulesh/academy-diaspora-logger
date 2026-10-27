@@ -10,6 +10,10 @@ class DiasporaAuthError(RuntimeError):
     """Cached Globus credentials are stale and must be refreshed."""
 
 
+class DiasporaTopicError(RuntimeError):
+    """A Kafka topic could not be created and does not already exist."""
+
+
 def get_client(environment: str | None = None, *, interactive: bool = False) -> Any:
     """Construct a ``diaspora_event_sdk.Client``, recovering from a stale token.
 
@@ -38,15 +42,39 @@ def get_client(environment: str | None = None, *, interactive: bool = False) -> 
 def ensure_topic(topic_name: str, environment: str | None = None, *, interactive: bool = False, client: Any = None) -> str:
     """Resolve *topic_name* to its namespace-qualified form, creating it if needed.
 
-    Safe to call repeatedly (best-effort create; existing topics are left alone).
+    Safe to call repeatedly (existing topics are left alone). Raises
+    ``DiasporaTopicError`` if the topic could not be created and does not
+    already exist -- otherwise the producer would silently send to nowhere.
     Pass an existing ``client`` to skip a redundant ``get_client()`` call.
     """
     if client is None:
         client = get_client(environment, interactive=interactive)
     short = topic_name if "." not in topic_name else topic_name.split(".", 1)[1]
-    with contextlib.suppress(Exception):
-        client.create_topic(short)
-    return topic_name if "." in topic_name else f"{client.namespace}.{topic_name}"
+    qualified = topic_name if "." in topic_name else f"{client.namespace}.{topic_name}"
+
+    try:
+        result = client.create_topic(short)
+    except Exception as exc:  # noqa: BLE001
+        result = {"status": "error", "message": str(exc)}
+    if isinstance(result, dict) and result.get("status") == "success":
+        return qualified
+    reason = result.get("message", result) if isinstance(result, dict) else result
+
+    # Create failed -- usually because the topic already exists. Confirm that
+    # before handing back a name the producer will write to.
+    namespace = qualified.split(".", 1)[0]
+    try:
+        namespaces = client.list_namespaces().get("namespaces", {})
+    except Exception as exc:  # noqa: BLE001
+        raise DiasporaTopicError(
+            f"Could not create or verify topic {qualified!r}: {reason}",
+        ) from exc
+    existing = namespaces.get(namespace) or ()
+    if short in existing or qualified in existing:
+        return qualified
+    raise DiasporaTopicError(
+        f"Topic {qualified!r} does not exist and could not be created: {reason}",
+    )
 
 
 def _is_invalid_grant(exc: BaseException) -> bool:
@@ -78,4 +106,4 @@ def _clear_stale_token(environment: str | None) -> None:
         get_globus_app(environment=environment).logout(sweep=True)
 
 
-__all__ = ["DiasporaAuthError", "ensure_topic", "get_client"]
+__all__ = ["DiasporaAuthError", "DiasporaTopicError", "ensure_topic", "get_client"]

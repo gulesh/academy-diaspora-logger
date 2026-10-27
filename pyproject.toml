@@ -25,7 +25,9 @@ classifiers = [
 dependencies = [
     "academy-py>=0.3.1",
     "certifi",
-    "diaspora-event-sdk",
+    # 0.4.7 added diaspora_event_sdk.sdk.auth (used by `diaspora setup`);
+    # 0.4.8 capped its kafka-python extra below 3.
+    "diaspora-event-sdk[kafka-python]>=0.4.8",
     "kafka-python<3",
 ]
 
